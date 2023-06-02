@@ -1,0 +1,289 @@
+/* 
+A hand held video game that tests perfect pitch. Have the speaker play a random tone then have the person guess which tone it is.
+Cycle through the options with the button to find the pitch. Get three wrong guesses. If all three attempts run out, restart.
+To restart, ask in morse code 'try again: left- yes, right- no'. If no, break. Reset button has to be pushed to start from beginning.
+
+Game Main:
+- Select game mode
+- start actions
+- Start game
+  - 3 single beeps
+  - 3 other octive beeps
+  - 3 double beeps
+  - 1 triple beep with other octive
+  - Cycle through the buttons, each time playing a tone. If you land on the right tone, click on both buttons then move to the next tone.
+    The number of tones has to correlate to the number of beeps played. If you have selected the amount of beeps, it will automatically tell
+    whether you got it right or wrong. Then, add green or red -> pause -> move to the next.
+  - If lost:
+    - play mario game over sound and ask to restart or not
+  - If won:
+    - End actions
+
+*The pixels shift from green to purple/ dark blue given how far you make it
+
+Select Game Mode
+Can select between easy and hard mode
+'Select Mode(switch): left - hard, right - east'
+
+Start actions
+At the start, give a start on what to do in morse code. 'Cycle buttons for correct note.' 
+* Allow for skip option in the introduction if either button is pressed.
+
+Easy
+- Play tone -> play same tone -> flash green then add green counter on a neo pixel * Plays a nice quick beep when the counter is added
+- Play tone -> play different tone -> flash red then add red counter on top of green counter.
+- play same different tone two more times -> add two more reds
+- Play mario game over sound track
+- Pause -> count 3 times, flashing each time from red, yellow, green -> then start
+Hard
+- Play tone -> play same tone -> flash green then add green counter on a neo pixel * Plays a nice quick beep when the counter is added
+- Play tone -> play different tone -> flash red -> Play mario game over sound track
+- Play tone -> count down from ten -> red in all spaces -> Flash red -> Play mario game over sound track
+- Pause then count 3 times then start
+
+End Actions
+10 rounds correlating to the number of neo pixels.
+- Given that winning condition is satisfied for either mode, play medieval ceremony trumpet theme or universal studios
+- Flash gold in a cool pattern: flash or sparkle
+- Restart
+
+*/
+
+#include <Adafruit_CircuitPlayground.h>
+#include <AsyncDelay.h>
+#include <Wire.h>
+#include <SPI.h>
+
+#define CLICKTHRESHHOLD 126
+
+const int leftButtonPin = 4;
+const int rightButtonPin = 5;
+const int switchPin = 7;
+
+int introSequence[81][2] = {//'Select Mode(switch): left - hard, right - easy'
+  {100,50},{100,50},{100,50},{0,450},
+  {100,50},{0,450},
+  {100,50},{400,50},{100,50},{100,50},{0,450},
+  {100,50},{0,450},
+  {400,50},{100,50},{400,50},{100,50},{0,450},
+  {400,50},
+  {0,1000},
+  {400,50},{400,50},{0,450},
+  {400,50},{400,50},{400,50},{0,450},
+  {400,50},{100,50},{100,50},{0,450},
+  {100,50},
+  {0,1000}, {0,1000},
+  {100,50},{400,50},{100,50},{100,50},{0,450},
+  {100,50},{0,450},
+  {100,50},{100,50},{400,50},{100,50},{0,450},
+  {400,50},
+  {0,1000},
+  {100,50},{100,50},{100,50},{100,50},{0,450},
+  {100,50},{400,50},{0,450},
+  {100,50},{400,50},{100,50},{0,450},
+  {400,50},{100,50},{100,50},
+  {0,1000},
+  {100,50},{400,50},{100,50},{0,450},
+  {100,50},{100,50},{0,450},
+  {400,50},{400,50},{100,50},{0,450},
+  {100,50},{100,50},{100,50},{100,50},{0,450},
+  {400,50}};
+
+float midi[127];
+const int A_four = 440; // Cfour = midi[60];
+
+int c_major[8] = {60, 62, 64, 65, 67, 69, 71, 72}; //C4
+
+int gameoverSequence[11][2] = {
+  {71, 100},
+  {77, 100},
+  {77, 75},
+  {77, 100},
+  {76, 100},
+  {74, 100},
+  {72, 50},
+  {64, 50},
+  {55, 50},
+  {64, 50},
+  {60, 100}
+};
+
+int gameRange[21] = {60,62,64,65,67,69,71,72,74,76,77,79,81,83,84,86,88,89,91,93,95};
+
+AsyncDelay delay_15s;
+AsyncDelay delay_5s;
+
+volatile int stage = 0;
+volatile int mode = 0;
+volatile int inputCount = 0;
+volatile bool tap = 0;
+volatile bool switchFlag = 0;
+volatile bool switchState;
+volatile bool buttonFlag = 0;
+volatile bool leftButton = 0;
+volatile bool rightButton = 0;
+volatile int lives;
+
+void setup() {
+  pinMode(leftButtonPin, INPUT);
+  pinMode(rightButtonPin, INPUT);
+  pinMode(switchPin, INPUT);
+
+  Serial.begin(9600);
+  CircuitPlayground.begin();
+
+  CircuitPlayground.setAccelRange(LIS3DH_RANGE_2_G);
+
+  CircuitPlayground.setAccelTap(2, CLICKTHRESHHOLD);
+
+  generateMIDI();
+
+  attachInterrupt(digitalPinToInterrupt(switchPin), slideInterrupt, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(leftButtonPin), lButtonInterrupt, RISING);
+  attachInterrupt(digitalPinToInterrupt(rightButtonPin), rButtonInterrupt, RISING);
+  attachInterrupt(digitalPinToInterrupt(CPLAY_LIS3DH_INTERRUPT), tapTime, FALLING);
+
+}
+
+void loop() {
+
+  switch (stage) {
+    case 0:
+      //intro();
+      delay_5s.start(5000, AsyncDelay::MILLIS);
+      delay(3000);
+      if (delay_5s.isExpired()) {
+        if (switchState == 0) {
+          mode = 0;
+          lives = 3;
+        } else if (switchState == 1) {
+          mode = 1;
+          lives = 1;
+        }
+      }
+      Serial.println(mode);
+      stage++;
+      break;
+    case 1:
+      gameOver();
+      stage++;
+      break;
+    case 2:
+      break;
+    case 3:
+     break;
+    default:
+      break;
+  }
+
+}
+
+////////////////////////////////////////// Morse Code
+void morseCode(int on, int off) {
+  for (int i = 0; i < 10; i++) {
+    CircuitPlayground.setPixelColor(i, 255, 255, 255);
+  }
+  delay(on);
+  for (int i = 0; i < 10; i++) {
+    CircuitPlayground.setPixelColor(i, 0, 0, 0);
+  }
+  delay(off);
+}
+////////////////////////////////////////// Interrupts
+
+void slideInterrupt() { // doesn't detect
+  switchFlag = !switchFlag;
+  for (int i = 0; i < 10; i++) {
+    switchState = digitalRead(switchPin);
+  }
+}
+
+void lButtonInterrupt() {
+  leftButton = 1;
+  buttonFlag = 1;
+}
+
+void rButtonInterrupt() {
+  rightButton = 1;
+  buttonFlag = 1;
+}
+////////////////////////////////////////// Functions
+
+void generateMIDI() {
+  for (int x = 0; x < 127; ++x) {
+    midi[x] = (A_four / 32.0) * pow(2.0, ((x - 9.0) / 12.0));
+    Serial.println(midi[x]);
+  }
+}
+
+void tapTime(void) {
+  tap = 1;
+  delay(100);
+  tap = 0;
+}
+
+void intro() { 
+  for (int i = 0; i < sizeof(introSequence)/sizeof(introSequence[0]); i++) {
+    morseCode(introSequence[i][0],introSequence[i][1]);
+  }
+}
+
+void gameOver() {
+  for (int i = 0; i < 10; i++) {
+    CircuitPlayground.setPixelColor(i, 255, 0, 0);
+  }
+  for (int i = 0; i < sizeof(gameoverSequence)/sizeof(gameoverSequence[0]); i++) {
+    CircuitPlayground.playTone(midi[gameoverSequence[i][0]], gameoverSequence[i][1]);
+  }
+  for (int i = 0; i < 5; i++) {
+    CircuitPlayground.setPixelColor(i, 0, 0, 0);
+    CircuitPlayground.setPixelColor(9-i, 0, 0, 0);
+    delay(50);
+  }
+}
+
+void startSequence() {
+
+}
+
+void inputNote(int range_min, int range_max, int repeat) { // returns the note selected
+  tap = 0;
+  for(int i = 0; i < repeat; i++) {
+    int randomArray[repeat];
+    int randomVal = gameRange[random(range_min, range_max)];
+    randomVal = randomArray[i];
+  }
+    
+  while(tap == 0) {
+    if (leftButton && !rightButton) {
+      inputCount--;
+      leftButton = 0;
+    } else if (rightButton && !leftButton) {
+      inputCount++;
+      rightButton = 0;
+    } else if (rightButton )
+
+    if (inputCount < 0) {
+      inputCount = range_max-range_min-1;
+    } else if (inputCount > (range_max-range_min-1)) {
+      inputCount = 0;
+    }
+
+    if (buttonFlag) {
+      CircuitPlayground.playTone(midi[gameRange[inputCount + range_min]], 200);
+    }  
+  }
+
+  
+
+}
+
+void gameStage(int trials) {
+  for (int i = 0; i < trials; i++) {
+    
+  }
+}
+
+void endSquence() {
+
+}
