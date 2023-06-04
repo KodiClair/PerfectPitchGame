@@ -108,6 +108,37 @@ int gameoverSequence[11][2] = {
   {60, 100}
 };
 
+int lossSequence[2][2] = {
+  {53,100},
+  {49,100}
+};
+
+int starting[4][2] = {
+  {78, 100},
+  {78, 100},
+  {78, 100},
+  {82, 150}
+};
+
+int successSequence[2][2] = {
+  {71,100},
+  {76,200}
+};
+
+int congratulationSequence[15][2] = {
+  {69, 100},
+  {70, 100},
+  {72, 75},{72, 100},{72, 100},{72, 100},{72, 150},
+  {77, 100},
+  {76, 100},
+  {74, 75},
+  {72, 100},
+  {70, 100},
+  {69, 100},
+  {67, 75},
+  {65, 200}
+};
+
 int gameRange[21] = {60,62,64,65,67,69,71,72,74,76,77,79,81,83,84,86,88,89,91,93,95};
 
 AsyncDelay delay_15s;
@@ -116,7 +147,9 @@ AsyncDelay delay_5s;
 volatile int stage = 0;
 volatile int mode = 0;
 volatile int inputCount = 0;
-volatile bool tap = 0;
+volatile int selectedNote;
+volatile int tapCount = 0;
+volatile bool tapFlag = 0;
 volatile bool switchFlag = 0;
 volatile bool switchState;
 volatile bool buttonFlag = 0;
@@ -124,6 +157,7 @@ volatile bool leftButton = 0;
 volatile bool rightButton = 0;
 volatile int lives;
 
+///////////////////////////////////////////
 void setup() {
   pinMode(leftButtonPin, INPUT);
   pinMode(rightButtonPin, INPUT);
@@ -133,8 +167,9 @@ void setup() {
   CircuitPlayground.begin();
 
   CircuitPlayground.setAccelRange(LIS3DH_RANGE_2_G);
-
   CircuitPlayground.setAccelTap(2, CLICKTHRESHHOLD);
+
+  randomSeed(analogRead(0));
 
   generateMIDI();
 
@@ -143,35 +178,76 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(rightButtonPin), rButtonInterrupt, RISING);
   attachInterrupt(digitalPinToInterrupt(CPLAY_LIS3DH_INTERRUPT), tapTime, FALLING);
 
+  CircuitPlayground.setBrightness(10);
+
 }
 
 void loop() {
-
+  
   switch (stage) {
     case 0:
       //intro();
       delay_5s.start(5000, AsyncDelay::MILLIS);
-      delay(3000);
+      delay(5000);
       if (delay_5s.isExpired()) {
         if (switchState == 0) {
           mode = 0;
           lives = 3;
+          stage = 2;
         } else if (switchState == 1) {
           mode = 1;
           lives = 1;
+          stage = 3;
         }
+        Serial.println(mode);
       }
-      Serial.println(mode);
-      stage++;
       break;
-    case 1:
-      gameOver();
-      stage++;
+    case 1: // start actions
       break;
-    case 2:
+    case 2: // easy mode
+      startingLine();
+      gameStage(0,3,7,14,1); //diff 1 b 1 oct
+      if (lives <= 0) {
+        stage = 5;
+        break;
+      }
+      gameStage(3,6,0,21,1); //diff 1 b 3 oct
+      if (lives <= 0) {
+        stage = 5;
+        break;
+      }
+      gameStage(6,9,7,14,2); //diff 2 b 1 oct
+      if (lives <= 0) {
+        stage = 5;
+        break;
+      }
+      gameStage(9,10,0,21,3); // diff 3b 3 oct
+      stage = 4;
       break;
-    case 3:
+    case 3: // hard mode
+      startingLine();
+      gameStage(0,3,7,14,1); //diff 1 b 1 oct
+      if (lives <= 0) {
+        stage = 5;
+        break;
+      }
+      gameStage(3,6,0,21,1); //diff 1 b 3 oct
+      if (lives <= 0) {
+        stage = 5;
+        break;
+      }
+      gameStage(6,9,7,14,2); //diff 2 b 1 oct
+      if (lives <= 0) {
+        stage = 5;
+        break;
+      }
+      gameStage(9,10,0,21,3); // diff 3b 3 oct
+      stage = 4;
      break;
+    case 4: // end actions(winning ceremony)
+      endSequence();
+      stage++;
+      break;
     default:
       break;
   }
@@ -207,6 +283,11 @@ void rButtonInterrupt() {
   rightButton = 1;
   buttonFlag = 1;
 }
+
+void tapTime(void) {
+  tapCount++;
+}
+
 ////////////////////////////////////////// Functions
 
 void generateMIDI() {
@@ -214,12 +295,6 @@ void generateMIDI() {
     midi[x] = (A_four / 32.0) * pow(2.0, ((x - 9.0) / 12.0));
     Serial.println(midi[x]);
   }
-}
-
-void tapTime(void) {
-  tap = 1;
-  delay(100);
-  tap = 0;
 }
 
 void intro() { 
@@ -242,23 +317,38 @@ void gameOver() {
   }
 }
 
-void startSequence() {
-
+void startingLine() {
+  for (int i = 0; i < 4; i++) {
+    CircuitPlayground.playTone(midi[starting[i][0]],starting[i][1]);
+  }
+  for (int i = 0; i < 10; i++) {
+    CircuitPlayground.setPixelColor(i, 0, 0, 255);
+  }
+  delay(75);
+  for (int i = 0; i < 10; i++) {
+    CircuitPlayground.setPixelColor(i, 0, 0, 0);
+  }
+  delay(1000);
 }
 
-void inputNote(int range_min, int range_max, int repeat) { // returns the note selected
-  tap = 0;
+void inputNote(int ledIndex, int range_min, int range_max, int repeat) { // returns the note selected
+  tapCount = 0;
+  int randomArray[repeat];
+  int selectedArray[repeat];
+  int parts = 0;
+
   for(int i = 0; i < repeat; i++) {
-    int randomArray[repeat];
     int randomVal = gameRange[random(range_min, range_max)];
+    CircuitPlayground.playTone(midi[randomVal], 100);
+    Serial.println(randomVal);
     randomVal = randomArray[i];
   }
     
-  while(tap == 0) {
-    if (leftButton && !rightButton) {
+  while(tapCount < repeat) {
+    if (leftButton && (rightButton == 0)) {
       inputCount--;
       leftButton = 0;
-    } else if (rightButton && !leftButton) {
+    } else if (rightButton && (leftButton)==0) {
       inputCount++;
       rightButton = 0;
     } else if (rightButton )
@@ -269,21 +359,63 @@ void inputNote(int range_min, int range_max, int repeat) { // returns the note s
       inputCount = 0;
     }
 
+    selectedNote = gameRange[inputCount + range_min];
+
     if (buttonFlag) {
-      CircuitPlayground.playTone(midi[gameRange[inputCount + range_min]], 200);
+      CircuitPlayground.playTone(midi[selectedNote], 100);
+      Serial.println(selectedNote);
+      buttonFlag = 0;
     }  
+    if (tapFlag) {
+      selectedNote = selectedArray[tapCount-1];
+      tapFlag = 0;
+      inputCount = 0;
+    }
   }
 
-  
+  for (int i = 0; i < repeat; i++) {
+    if (randomArray[i] == selectedArray[i]) {
+      parts++;
+    }
+  }
+
+  if (parts == repeat) {
+    CircuitPlayground.setPixelColor(ledIndex, 0, 255, 0);
+    for (int i = 0; i < sizeof(successSequence)/sizeof(successSequence[0]); i++) {
+      CircuitPlayground.playTone(midi[successSequence[i][0]],successSequence[i][1]);
+    }
+  } else {
+    CircuitPlayground.setPixelColor(ledIndex, 255, 0, 0);
+    for (int i = 0; i < sizeof(lossSequence)/sizeof(lossSequence[0]); i++) {
+      CircuitPlayground.playTone(midi[lossSequence[i][0]],lossSequence[i][1]);
+    }
+    lives--;
+  }
 
 }
 
-void gameStage(int trials) {
-  for (int i = 0; i < trials; i++) {
-    
+void gameStage(int trial_min, int trial_max, int range_min, int range_max, int repeat) {
+  for (int ledIndex = trial_min; ledIndex < trial_max; ledIndex++) {
+    inputNote(ledIndex, range_min, range_max, repeat);
+    if (lives <= 0) {
+      gameOver();
+      stage = 5;
+      break;
+    }
   }
 }
 
-void endSquence() {
+void endSequence() {
+  for (int i = 0; i < 10; i++) {
+    CircuitPlayground.setPixelColor(i, 255, 215, 0);
+  }
+  for (int i = 0; i < sizeof(congratulationSequence)/sizeof(congratulationSequence[0]); i++) {
+    CircuitPlayground.playTone(midi[congratulationSequence[i][0]],congratulationSequence[i][1]);
+  }
+  for (int i = 0; i < 5; i++) {
+    CircuitPlayground.setPixelColor(i, 0, 0, 0);
+    CircuitPlayground.setPixelColor(9-i, 0, 0, 0);
+    delay(50);
+  }
 
 }
