@@ -1,54 +1,20 @@
 # PerfectPitchGame
-Circuit Playground Express game meant to test your perfect pitch.
-The basic flow of the game is the CPX speaker plays a random note, asking the user for a matching response. By sifting through C4 major scale using the buttons, the user can tap the back of the board to make a selection.
+A game on the Circuit Playground Express Board that tests your pitch.
 
-/* 
-A hand held video game that tests perfect pitch. Have the speaker play a random tone then have the person guess which tone it is.
-Cycle through the options with the button to find the pitch. Get three wrong guesses. If all three attempts run out, restart.
-To restart, ask in morse code 'try again: left- yes, right- no'. If no, break. Reset button has to be pushed to start from beginning.
+The basic rundown of this game is a random sequence generator that the player must match to progress forwards. By sifting through C4 major scale using the buttons(the player's range will stay the same through every stage), the user can double tap the back of the board to make a selection. Each neo pixel on the CPX board correlates to a stage in the game. The player can either guess the correct sequence of notes which will award a green pixel or the wrong sequence which will award a red pixel. There are no redos for each stage. The difficulty of sequences will increase in the following order:
+  - 3 single beeps with C4 octive range
+  - 3 single beeps with C3-C5 octive range
+  - 3 double beeps with C4 octive range
+  - 1 triple beep with C3-C5 octive range
+ In the case of multiple beeps in a stage, the player will have to make multiple note selections. To do this, the user has to sift through the notes and make a number of note selections corresponding to the given random note sequence played. Only after the required number of selections equals the number of beeps projected will the stage progress.
+ 
+*It should be stated that a short beep will play after the player has tapped the board. This is merely an auditory tool used to signify that a selection has been made, not the random sequence of notes being played. Additionally, the CPX board is to be held in such a way that the micro usb port is facing north of the player. The left button will have the pin D4 marked above it and the right button, D5.
 
-Game Main:
-- Select game mode
-- start actions
-- Start game
-  - 3 single beeps
-  - 3 other octive beeps
-  - 3 double beeps
-  - 1 triple beep with other octive
-  - Cycle through the buttons, each time playing a tone. If you land on the right tone, click on both buttons then move to the next tone.
-    The number of tones has to correlate to the number of beeps played. If you have selected the amount of beeps, it will automatically tell
-    whether you got it right or wrong. Then, add green or red -> pause -> move to the next.
-  - If lost:
-    - play mario game over sound and ask to restart or not
-  - If won:
-    - End actions
+Game Timeline:
+  The game starts off by flashing a morse code sequence saying: 'Select Mode: left - hard, right - easy'. The player can make a selection via the slide switch. 5 seconds will be given after the morse code sequence ends for the player to make their mode selection. If the player doesn't want to wait for the intro sequence to finish, either of the buttons on the CPX board can be pressed to skip which will transition immediately to the 5 second wait/ selection period. A starting sequence will commence after the selection has been made. Only after the neo pixels have flashed blue will the actual gameplay start. 
+ - Easy mode gives the player two advantages, 3 lives before death and an unlimited amount of time to choose the sequences.
+ - Hard mode gives the player 1 life before death and ten seconds per stage to make a selection. If the timer runs out, a life will be lost and the game will end.
+  
+  After the player makes it to the end, a winning sequence will commence followed by the end of the game. If the player loses all of the lives before reaching all 10 neo pixels, a gameover sequence will commence followed by the end of the game. If the player wants to try again, merely press the reset button on the CPX board. This will push the gameplay back to the introductory morse code sequence. All that's left to do is play the game!
+ 
 
-*The pixels shift from green to purple/ dark blue given how far you make it
-
-Select Game Mode
-Can select between easy and hard mode
-'Select Mode(switch): left - hard, right - east'
-
-Start actions
-At the start, give a start on what to do in morse code. 'Cycle buttons for correct note.' 
-* Allow for skip option in the introduction if either button is pressed.
-
-Easy
-- Play tone -> play same tone -> flash green then add green counter on a neo pixel * Plays a nice quick beep when the counter is added
-- Play tone -> play different tone -> flash red then add red counter on top of green counter.
-- play same different tone two more times -> add two more reds
-- Play mario game over sound track
-- Pause -> count 3 times, flashing each time from red, yellow, green -> then start
-Hard
-- Play tone -> play same tone -> flash green then add green counter on a neo pixel * Plays a nice quick beep when the counter is added
-- Play tone -> play different tone -> flash red -> Play mario game over sound track
-- Play tone -> count down from ten -> red in all spaces -> Flash red -> Play mario game over sound track
-- Pause then count 3 times then start
-
-End Actions
-10 rounds correlating to the number of neo pixels.
-- Given that winning condition is satisfied for either mode, play medieval ceremony trumpet theme or universal studios
-- Flash gold in a cool pattern: flash or sparkle
-- Restart
-
-*/
