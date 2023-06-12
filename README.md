@@ -1,7 +1,7 @@
 # PerfectPitchGame
 A game on the Circuit Playground Express Board that tests your pitch.
 
-The basic rundown of this game is a random sequence generator that the player must match to progress forwards. By sifting through C4 major scale using the buttons(the player's range will stay the same through every stage), the user can double tap the back of the board to make a selection. Each neo pixel on the CPX board correlates to a stage in the game. The player can either guess the correct sequence of notes which will award a green pixel or the wrong sequence which will award a red pixel. There are no redos for each stage. The difficulty of sequences will increase in the following order:
+The basic rundown of this game is a random sequence generator that the player must match to progress forwards. By sifting through C4 major scale using the buttons(the player's range will stay the same through every stage), the user can tap the back of the board to make a selection. The tap only registers if the board is tapped twice in slow(around half a second apart) succession and with enough force otherwise the selection will not register and a small beep will not play. Each neo pixel on the CPX board correlates to a stage in the game. The player can either guess the correct sequence of notes which will award a green pixel or the wrong sequence which will award a red pixel. There are no redos for each stage. The difficulty of sequences will increase in the following order:
   - 3 single beeps with C4 octive range
   - 3 single beeps with C3-C5 octive range
   - 3 double beeps with C4 octive range
