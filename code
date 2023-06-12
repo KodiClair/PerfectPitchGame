@@ -373,25 +373,25 @@ void inputNote(int ledIndex, int range_min, int range_max, int repeat) { // retu
     delay(100);
   }
 
-  while(tapCount < repeat) { // problem with buttons not completely cycling through
-    if (leftButton && (rightButton == 0)) { 
-      delay(5);
-      inputCount--;
-      leftButton = 0;
-    } else if (rightButton && (leftButton)==0) {
-      delay(5);
-      inputCount++;
-      rightButton = 0;
-    } 
-
-    if (inputCount < 0) { 
-      inputCount = 6;
-    } else if (inputCount > (6)) {
-      inputCount = 0;
-    }
-
+  while(tapCount < repeat) {
     if (buttonFlag) {
       delay(5);
+      if (leftButton && (rightButton == 0)) { 
+        delay(5);
+        inputCount--;
+        leftButton = 0;
+      } else if (rightButton && (leftButton)==0) {
+        delay(5);
+        inputCount++;
+        rightButton = 0;
+      } 
+
+      if (inputCount < 0) { 
+        inputCount = 6;
+      } else if (inputCount > (6)) {
+        inputCount = 0;
+      }
+
       selectedIndex = inputCount + 7;
       selectedNote = gameRange[selectedIndex]; 
       CircuitPlayground.playTone(midi[selectedNote], 150);
