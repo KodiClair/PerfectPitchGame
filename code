@@ -3,6 +3,7 @@ A hand held video game that tests perfect pitch. Have the speaker play a random 
 Cycle through the options with the button to find the pitch. Get three wrong guesses. If all three attempts run out, restart.
 To restart, ask in morse code 'try again: left- yes, right- no'. If no, break. Reset button has to be pushed to start from beginning.
 
+
 Game Main:
 - Select game mode
 - start actions
