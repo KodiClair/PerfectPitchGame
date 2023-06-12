@@ -285,7 +285,7 @@ void startingLine() {
   delay(1000);
 }
 
-void inputNote(int ledIndex, int range_min, int range_max, int repeat) { // returns the note selected
+void inputNote(int ledIndex, int range_min, int range_max, int repeat) { // Called in gameStage function below
   tapCount = 0;
   int randomArray[repeat];
   int selectedArray[repeat];
@@ -361,7 +361,7 @@ void inputNote(int ledIndex, int range_min, int range_max, int repeat) { // retu
   }
 
   Serial.println();
-  for (int i = 0; i < repeat; i++) { //Problem in selected array (prints out multiple different values that aren't within the )
+  for (int i = 0; i < repeat; i++) { 
     Serial.print(selectedArray[i]);
     Serial.print(" | ");
   }
@@ -405,11 +405,7 @@ void endSequence() {
   for (int i = 0; i < 10; i++) {
     CircuitPlayground.setPixelColor(i, 255, 215, 0);
   }
-  /*
-  for (int i = 0; i < sizeof(congratulationSequence)/sizeof(congratulationSequence[0]); i++) {
-    CircuitPlayground.playTone(midi[congratulationSequence[i][0]],congratulationSequence[i][1]);
-  }
-  */
+
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < sizeof(congratsSequence2)/sizeof(congratsSequence2[0]); j++) {
       CircuitPlayground.playTone(midi[congratsSequence2[j][0]],congratsSequence2[j][1]);
