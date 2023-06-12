@@ -94,7 +94,7 @@ int congratsSequence2[6][2] = {
 
 int gameRange[21] = {60,62,64,65,67,69,71,72,74,76,77,79,81,83,84,86,88,89,91,93,95};
 
-AsyncDelay delay_15s;
+AsyncDelay delay_10s;
 AsyncDelay delay_5s;
 
 volatile int selectedNote;
@@ -141,17 +141,17 @@ void loop() {
       intro();
       delay_5s.start(5000, AsyncDelay::MILLIS);
       delay(5000);
+      switchState = digitalRead(switchPin);
       if (delay_5s.isExpired()) {
         if (switchState == 0) {
           mode = 0;
           lives = 3;
-          stage = 2;
         } else if (switchState == 1) {
           mode = 1;
           lives = 1;
-          stage = 3;
         }
         Serial.println(mode);
+        stage = 2;
       }
       buttonFlag = 0;
       leftButton = 0;
@@ -181,33 +181,9 @@ void loop() {
         stage = 5;
         break;
       }
-      stage = 4;
+      stage++;
       break;
-    case 3: // hard mode
-      startingLine();
-      gameStage(0,3,7,14,1); //diff 1 b 1 oct
-      if (lives <= 0) {
-        stage = 5;
-        break;
-      }
-      gameStage(3,6,0,21,1); //diff 1 b 3 oct
-      if (lives <= 0) {
-        stage = 5;
-        break;
-      }
-      gameStage(6,9,7,14,2); //diff 2 b 1 oct
-      if (lives <= 0) {
-        stage = 5;
-        break;
-      }
-      gameStage(9,10,0,21,3); // diff 3b 3 oct
-      if (lives <= 0) {
-        stage = 5;
-        break;
-      }
-      stage = 4;
-     break;
-    case 4: // end actions(winning ceremony)
+    case 3: // end actions(winning ceremony)
       endSequence();
       stage++;
       break;
@@ -232,9 +208,8 @@ void morseCode(int on, int off) {
 
 void slideInterrupt() {
   switchFlag = !switchFlag;
-  for (int i = 0; i < 10; i++) {
-    switchState = digitalRead(switchPin);
-  }
+  delay(5);
+  switchState = digitalRead(switchPin);
 }
 
 void lButtonInterrupt() {
@@ -266,7 +241,7 @@ void intro() {
   for (int i = 0; i < sizeof(introSequence)/sizeof(introSequence[0]); i++) {
     morseCode(introSequence[i][0],introSequence[i][1]);
     if (buttonFlag) {
-      break;
+      break;      
     }
   }
 }
@@ -318,6 +293,10 @@ void inputNote(int ledIndex, int range_min, int range_max, int repeat) { // retu
   int randomRange;
   int randomVal;
 
+  if (mode == 1) {
+    delay_10s.start(10000, AsyncDelay::MILLIS);
+  }
+
   for(int i = 0; i < repeat; i++) {
     randomRange = random(range_min, range_max);
     randomVal = gameRange[randomRange];
@@ -362,11 +341,17 @@ void inputNote(int ledIndex, int range_min, int range_max, int repeat) { // retu
       delay(5);
       Serial.println("Tap Flag: ");
       Serial.println(selectedIndex);
-      Serial.println(selectedNote);// messing up the note
+      Serial.println(selectedNote);
       selectedArray[tapCount-1] = selectedNote;
       CircuitPlayground.playTone(midi[60], 50);
       tapFlag = 0;
-    } // bugging out with interrupts, taptime gets called again after tapflag
+    } 
+
+    if (mode == 1 && delay_10s.isExpired()) {
+      delay(5);
+      selectedArray[0] = 0;
+      tapCount = repeat;
+    }
   }
 
   //////////
@@ -409,7 +394,7 @@ void gameStage(int trial_min, int trial_max, int range_min, int range_max, int r
     delay(500);
     if (lives <= 0) {
       gameOver();
-      stage = 5;
+      stage = 4;
       break;
       delay(500);
     }
