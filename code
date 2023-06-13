@@ -120,13 +120,12 @@ void setup() {
   Serial.begin(9600);
   CircuitPlayground.begin();
 
+  randomSeed(analogRead(0)); // randomizes the seed for random
+  generateMIDI(); // creates the midi list with the note values
+
   CircuitPlayground.setAccelRange(LIS3DH_RANGE_8_G);
   CircuitPlayground.setAccelTap(2, CLICKTHRESHHOLD);
-  CircuitPlayground.setBrightness(10);
-
-  randomSeed(analogRead(0));
-
-  generateMIDI();
+  CircuitPlayground.setBrightness(10); // Change value inside set Brightness to increase or decrease LED brightness
 
   attachInterrupt(digitalPinToInterrupt(switchPin), slideInterrupt, CHANGE);
   attachInterrupt(digitalPinToInterrupt(leftButtonPin), lButtonInterrupt, FALLING);
@@ -135,11 +134,11 @@ void setup() {
 }
 
 void loop() {
-  
-  switch (stage) {
+  switch (stage) { // increments through each stage to replicate a single linear system. Stage starts off at 0
     case 0:
+      randomSeed(analogRead(0));
       intro();
-      delay_5s.start(5000, AsyncDelay::MILLIS);
+      delay_5s.start(5000, AsyncDelay::MILLIS); // gives the user 5 seconds to make their decision
       delay(5000);
       switchState = digitalRead(switchPin);
       if (delay_5s.isExpired()) {
@@ -155,27 +154,31 @@ void loop() {
       }
       buttonFlag = 0;
       leftButton = 0;
-      rightButton = 0;
+      rightButton = 0; // sets all button values to 0 incase of skippage
       break;
-    case 1: // start actions
+    case 1: // potential case for additional start actions
       break;
-    case 2: // easy mode
+    case 2: 
       startingLine();
+      delay(5);
       gameStage(0,3,7,14,1); //diff 1 b 1 oct
       if (lives <= 0) {
         stage = 5;
         break;
       }
+      delay(5);
       gameStage(3,6,0,21,1); //diff 1 b 3 oct
       if (lives <= 0) {
         stage = 5;
         break;
       }
+      delay(5);
       gameStage(6,9,7,14,2); //diff 2 b 1 oct
       if (lives <= 0) {
         stage = 5;
         break;
       }
+      delay(5);
       gameStage(9,10,0,21,3); // diff 3b 3 oct
       if (lives <= 0) {
         stage = 5;
@@ -184,7 +187,8 @@ void loop() {
       stage++;
       break;
     case 3: // end actions(winning ceremony)
-      endSequence();
+      delay(5);
+      endSequence(); // calls the endSequence function that plays the winning 2D array
       stage++;
       break;
     default:
@@ -390,7 +394,7 @@ void inputNote(int ledIndex, int range_min, int range_max, int repeat) { // Call
 
 void gameStage(int trial_min, int trial_max, int range_min, int range_max, int repeat) {
   for (int ledIndex = trial_min; ledIndex < trial_max; ledIndex++) {
-    inputNote(ledIndex, range_min, range_max, repeat);
+    inputNote(ledIndex, range_min, range_max, repeat); // embedded input note function
     delay(500);
     if (lives <= 0) {
       gameOver();
