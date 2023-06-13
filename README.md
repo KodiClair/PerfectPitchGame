@@ -2,10 +2,10 @@
 A game on the Circuit Playground Express Board that tests your pitch.
 
 The basic rundown of this game is a random sequence generator that the player must match to progress forwards. By sifting through C4 major scale using the buttons(the player's range will stay the same through every stage), the user can tap the back of the board to make a selection. The tap only registers if the board is tapped twice in slow(around half a second apart) succession and with enough force otherwise the selection will not register and a small beep will not play. Each neo pixel on the CPX board correlates to a stage in the game. The player can either guess the correct sequence of notes which will award a green pixel or the wrong sequence which will award a red pixel. There are no redos for each stage. The difficulty of sequences will increase in the following order:
-  - 3 single beeps with C4 octive range
-  - 3 single beeps with C3-C5 octive range
-  - 3 double beeps with C4 octive range
-  - 1 triple beep with C3-C5 octive range
+  - 3 single beeps with C4-B4 octive range
+  - 3 single beeps with C3-B5 octive range
+  - 3 double beeps with C4-B4 octive range
+  - 1 triple beep with C3-B5 octive range
  In the case of multiple beeps in a stage, the player will have to make multiple note selections. To do this, the user has to sift through the notes and make a number of note selections corresponding to the given random note sequence played. Only after the required number of selections equals the number of beeps projected will the stage progress.
  
 *It should be stated that a short beep will play after the player has tapped the board. This is merely an auditory tool used to signify that a selection has been made, not the random sequence of notes being played. Additionally, the CPX board is to be held in such a way that the micro usb port is facing north of the player. The left button will have the pin D4 marked above it and the right button, D5.
